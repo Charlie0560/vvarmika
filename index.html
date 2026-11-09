@@ -137,6 +137,34 @@
         gap: 22px;
         align-items: center;
       }
+      .hr {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+      }
+      .cartl {
+        text-decoration: none;
+        color: var(--heroT);
+        opacity: 0.75;
+      }
+      .cartl:hover,
+      .cartl.on {
+        opacity: 1;
+      }
+      .bg {
+        display: none;
+        background: none;
+        border: 0;
+        color: var(--heroT);
+        font-size: 28px;
+        line-height: 1;
+        padding: 2px 6px;
+        cursor: pointer;
+      }
+      .thumbs {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
       .nav a {
         text-decoration: none;
         color: var(--heroT);
@@ -685,8 +713,32 @@
           font-size: 16px;
           letter-spacing: 0.2em;
         }
-        .nav {
+        .hr {
           gap: 14px;
+        }
+        .nav {
+          display: none;
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 0;
+          background: var(--hero);
+          padding: 4px 5vw 12px;
+          border-bottom: 1px solid rgba(255, 241, 220, 0.2);
+        }
+        .nav.open {
+          display: flex;
+        }
+        .nav a,
+        .nav span {
+          padding: 13px 0;
+          border-bottom: 1px solid rgba(255, 241, 220, 0.15);
+        }
+        .bg {
+          display: block;
         }
         .mark {
           width: 38px;
@@ -951,7 +1003,8 @@
           )}</div></div><div class="dgrid" style="grid-template-columns:1fr 1fr"><div class="box"><h3 style="margin-bottom:10px">How customers pay</h3><div class="mix"><i style="width:58%;background:#D81B60"></i><i style="width:27%;background:#F2B33D"></i><i style="width:15%;background:#7A1230"></i></div><p style="margin:8px 0 0;color:var(--mute)">UPI 58%, card 27%, cash on delivery 15%</p></div><div class="box"><h3 style="margin-bottom:6px">Needs attention</h3><p style="margin:4px 0">${nw} new orders waiting to be packed</p><p style="margin:4px 0">Rani Pink Anarkali Set: only 4 left</p><p style="margin:4px 0">Lavender Garden Kurta Set: size M sold out</p></div></div>`;
       }
       const SW = "917231955848",
-        SE = "vvarmika@gmail.com";
+        SE = "vvarmika@gmail.com",
+        LINK = "https://claude.ai/artifact/MuABYRnbhnD6sv6aBB9tQh";
       P[4].ar = 5;
       P[0].ar = 4;
       let ofil = "All";
@@ -1133,7 +1186,7 @@
                 (l, k) =>
                   `${k + 1}. ${find(l.id).n}, size ${l.s}, qty ${l.q}: ${inr(
                     find(l.id).p * l.q
-                  )}`
+                  )}\nPhoto: ${LINK}#product-${l.id}`
               )
               .join("\n") +
             `\n\nDelivery: ${ship() ? inr(ship()) : "Free"}\nTotal: ${inr(
@@ -1184,7 +1237,22 @@
           last.id
         } is ready to send</h1><p>Tap a button to send this message to the shop. The shop sees every detail and replies to confirm payment and delivery.</p><div class="box" style="white-space:pre-wrap;margin:16px 0">${esc(
           last.m
-        )}</div><a class="btn" id="wa" target="_blank" rel="noopener" href="${wal()}">Send on WhatsApp</a> <a class="btn alt" id="em" target="_blank" rel="noopener" href="${mal()}">Send by email</a><p style="color:var(--mute);font-size:14px;margin-top:18px">On a phone you can also send the product photos with the order. This opens your share sheet, where you choose WhatsApp or email.</p><button class="btn alt" onclick="shareImg()">Share with product photos</button></div><div class="box" style="align-self:start"><h3 style="margin-bottom:8px">Shop contact</h3><p style="color:var(--mute);font-size:14px">Orders go to the shop's WhatsApp and email below. You can change them to test with another number.</p><label>Shop WhatsApp (with country code)<input id="sw" inputmode="tel" value="${SW}" oninput="upd()"></label><label>Shop email<input id="se" value="${SE}" oninput="upd()"></label></div></div>`;
+        )}</div><a class="btn" id="wa" target="_blank" rel="noopener" href="${wal()}">Send on WhatsApp</a> <a class="btn alt" id="em" target="_blank" rel="noopener" href="${mal()}">Send by email</a><p style="color:var(--mute);font-size:14px;margin-top:18px">Each item in the message above has a link to its photo, and it goes straight to the shop's number. To attach the photo files too, use the button below and pick the shop's chat yourself. A website cannot choose the contact when sharing photos.</p><button class="btn alt" onclick="shareImg()">Attach photos (pick the chat yourself)</button></div><div class="box" style="align-self:start"><h3 style="margin-bottom:8px">Shop contact</h3><p style="color:var(--mute);font-size:14px">Orders go to the shop's WhatsApp and email below. You can change them to test with another number.</p><label>Shop WhatsApp (with country code)<input id="sw" inputmode="tel" value="${SW}" oninput="upd()"></label><label>Shop email<input id="se" value="${SE}" oninput="upd()"></label></div></div>`;
+      }
+      function menu() {
+        const n = $("#nv"),
+          b = $("#bg"),
+          o = n.classList.toggle("open");
+        b.setAttribute("aria-expanded", o);
+        b.textContent = o ? "✕" : "☰";
+      }
+      function savedV() {
+        const L = P.filter((x) => fav.has(x.id));
+        return `<div class="wrap" style="padding-top:5vh"><div class="sec"><h2>Saved items</h2></div>${
+          L.length
+            ? `<div class="grid">${L.map(card).join("")}</div>`
+            : `<div style="padding:6vh 0 10vh"><p style="color:var(--mute)">You have not saved anything yet. Tap the heart on a product to save it here.</p><a class="btn" href="#shop">Browse the shop</a></div>`
+        }</div>`;
       }
       function pick(k, m) {
         cur = k;
@@ -1257,17 +1325,17 @@
           on = (k) => (h.startsWith(k) ? "on" : "");
         return `<header class="hd"><a class="brand" href="#home"><span class="mark" style="background-image:url(${
           IMG.logo
-        })"></span>VVARMIKA</a><nav class="nav"><a class="${on(
+        })"></span>VVARMIKA</a><div class="hr"><nav class="nav" id="nv" onclick="if(event.target.closest('a'))menu()"><a class="${on(
           "home"
         )}" href="#home">Home</a><a class="${on(
           "shop"
         )}" href="#shop">Shop</a><a class="${on(
           "admin"
-        )}" href="#admin">Dashboard</a><span title="Saved items">♥ ${
-          fav.size
-        }</span><a class="${on(
+        )}" href="#admin">Dashboard</a><a class="${on(
+          "saved"
+        )}" href="#saved">♥ Saved (${fav.size})</a></nav><a class="cartl ${on(
           "cart"
-        )}" href="#cart">Cart (${n})</a></nav></header>`;
+        )}" href="#cart">Cart (${n})</a><button class="bg" id="bg" aria-label="Menu" aria-expanded="false" onclick="menu()">☰</button></div></header>`;
       }
       function home() {
         return `<div class="herob"><div class="wrap"><section class="hero"><div><h1>Woven with grace</h1><p>Premium ethnic wear, crafted with elegance and made for every celebration.</p><a class="btn" href="#shop">Shop the collection</a><div class="now" id="now"></div></div><div class="show"><div class="big arch"><img id="bigI" src="${
@@ -1513,6 +1581,7 @@
               cart: cartV,
               checkout,
               confirmed: done,
+              saved: savedV,
               sent: sentV,
               admin: adminDash,
               "admin-orders": adminOrd,
