@@ -588,6 +588,39 @@
           grid-template-columns: 1fr !important;
         }
       }
+      .oi {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin: 4px 0;
+      }
+      .oi img {
+        width: 34px;
+        height: 44px;
+        object-fit: cover;
+        border-radius: 17px 17px 3px 3px;
+        flex: none;
+      }
+      .tag {
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--band);
+        color: #3b0f1b;
+        font-size: 12px;
+        font-weight: 500;
+        padding: 3px 12px;
+        border-radius: 999px;
+        z-index: 1;
+      }
+      a.chip {
+        text-decoration: none;
+        color: inherit;
+      }
+      td small {
+        color: var(--mute);
+      }
       .err {
         color: #b3402e;
         min-height: 24px;
@@ -779,13 +812,47 @@
         tm,
         cart = [],
         orders = [
-          { id: "VV1001", c: "Sneha P.", t: 5498, pay: "UPI", st: "Shipped" },
+          {
+            id: "VV1003",
+            c: "Isha Kulkarni",
+            ph: "98765 43212",
+            a: "12 Station Road, near the old market",
+            ct: "Latur",
+            z: "413512",
+            at: new Date(Date.now() - 864e5 * 0.2),
+            t: 3699,
+            pay: "WhatsApp",
+            st: "New",
+            u: [{ id: 6, q: 1, s: "M" }],
+          },
           {
             id: "VV1002",
-            c: "Isha K.",
-            t: 3699,
-            pay: "Cash on delivery",
-            st: "New",
+            c: "Sneha Patil",
+            ph: "98765 43211",
+            a: "Flat 4, Shivaji Nagar",
+            ct: "Satara",
+            z: "415001",
+            at: new Date(Date.now() - 864e5 * 2),
+            t: 4299,
+            pay: "UPI",
+            st: "Shipped",
+            u: [{ id: 5, q: 1, s: "L" }],
+          },
+          {
+            id: "VV1001",
+            c: "Pooja Rane",
+            ph: "98765 43210",
+            a: "Behind the bus stand, Main Road",
+            ct: "Jalgaon",
+            z: "425001",
+            at: new Date(Date.now() - 864e5 * 5),
+            t: 6098,
+            pay: "Email",
+            st: "Delivered",
+            u: [
+              { id: 2, q: 1, s: "M" },
+              { id: 3, q: 1, s: "S" },
+            ],
           },
         ],
         size = "M",
@@ -849,7 +916,7 @@
           tp = P.map((x, k) => ({
             x,
             u:
-              Math.round((U[k] * n) / 30) +
+              Math.round(((U[k] || 0) * n) / 30) +
               lv.reduce(
                 (a, o) =>
                   a +
@@ -885,6 +952,157 @@
       }
       const SW = "917231955848",
         SE = "vvarmika@gmail.com";
+      P[4].ar = 5;
+      P[0].ar = 4;
+      let ofil = "All";
+      const sp = () => [...P].sort((a, b) => (b.ar >= 4) - (a.ar >= 4));
+      const at = (k) =>
+        `<div class="chips" style="margin:18px 0"><a class="chip ${
+          k == "d" ? "on" : ""
+        }" href="#admin">Dashboard</a><a class="chip ${
+          k == "o" ? "on" : ""
+        }" href="#admin-orders">Orders</a><a class="chip ${
+          k == "p" ? "on" : ""
+        }" href="#admin-products">Products</a></div>`;
+      function adminDash() {
+        return `<div class="wrap" style="padding:5vh 0 56px"><h2>Shop dashboard</h2><p style="color:var(--mute)">Sample figures for the demo. Orders and reviews you add in the shop update these numbers.</p>${at(
+          "d"
+        )}${dash()}</div>`;
+      }
+      function adminOrd() {
+        const S = ["All", "New", "Packed", "Shipped", "Delivered"],
+          L = orders.filter((o) => ofil == "All" || o.st == ofil);
+        return `<div class="wrap" style="padding:5vh 0 56px"><h2>Orders</h2>${at(
+          "o"
+        )}<div class="chips">${S.map(
+          (s) =>
+            `<button class="chip ${
+              s == ofil ? "on" : ""
+            }" onclick="ofil='${s}';render(1)">${s} (${
+              s == "All"
+                ? orders.length
+                : orders.filter((o) => o.st == s).length
+            })</button>`
+        ).join(
+          ""
+        )}</div><div class="tbl"><table style="min-width:980px"><tr><th>Order</th><th>Customer</th><th>Delivery address</th><th>Items</th><th>Total</th><th>Via</th><th>Status</th></tr>${L.map(
+          (o) =>
+            `<tr><td><b>${o.id}</b><br><small>${o.at.toLocaleString("en-IN", {
+              day: "numeric",
+              month: "short",
+              hour: "numeric",
+              minute: "2-digit",
+            })}</small></td><td><b>${esc(o.c)}</b><br><a href="tel:${esc(
+              o.ph
+            )}">${esc(o.ph)}</a></td><td>${esc(o.a)}<br>${esc(
+              o.ct || ""
+            )} ${esc(o.z || "")}</td><td>${o.u
+              .map((l) => {
+                const x = find(l.id);
+                return `<div class="oi"><img src="${IMG[x.i]}" alt=""><span>${
+                  x.n
+                }<br><small>Size ${l.s}, qty ${l.q}</small></span></div>`;
+              })
+              .join("")}</td><td><b>${inr(o.t)}</b></td><td>${
+              o.pay
+            }</td><td><select style="margin:0;width:auto" onchange="orders[${orders.indexOf(
+              o
+            )}].st=this.value;render(1)">${[
+              "New",
+              "Packed",
+              "Shipped",
+              "Delivered",
+            ]
+              .map(
+                (s) => `<option ${s == o.st ? "selected" : ""}>${s}</option>`
+              )
+              .join("")}</select></td></tr>`
+        ).join("")}</table></div></div>`;
+      }
+      function adminProd() {
+        return `<div class="wrap" style="padding:5vh 0 56px"><h2>Products</h2>${at(
+          "p"
+        )}<div class="box" style="margin-bottom:22px"><h3 style="margin-bottom:10px">Add a new product</h3><div class="row"><label>Name<input id="pn"></label><label>Price in ₹<input id="pp" type="number" inputmode="numeric"></label></div><div class="row"><label>Occasion<select id="po2"><option>Festive</option><option>Wedding</option><option>Everyday</option></select></label><label>Photo<input id="pf" type="file" accept="image/*"></label></div><label>Description<textarea id="pd2" rows="2"></textarea></label><div class="err" id="pe"></div><button class="btn" onclick="addP()">Add to shop</button></div><p style="color:var(--mute)">Rate a product 4 or 5 stars to highlight it as a Top pick. Highlighted products are shown first to every customer.</p><div class="tbl"><table><tr><th>Photo</th><th>Product</th><th>Price</th><th>Occasion</th><th>Admin rating</th></tr>${P.map(
+          (x) =>
+            `<tr><td><div class="oi"><img src="${
+              IMG[x.i]
+            }" alt=""></div></td><td>${esc(x.n)}${
+              x.ar >= 4 ? ' <span class="st">Top pick</span>' : ""
+            }</td><td><input type="number" value="${
+              x.p
+            }" style="width:100px;margin:0" onchange="find(${
+              x.id
+            }).p=+this.value"></td><td>${
+              x.o
+            }</td><td><select style="margin:0;width:auto" onchange="find(${
+              x.id
+            }).ar=+this.value;render(1)">${[0, 1, 2, 3, 4, 5]
+              .map(
+                (r) =>
+                  `<option value="${r}" ${r == (x.ar || 0) ? "selected" : ""}>${
+                    r ? "★".repeat(r) : "Not rated"
+                  }</option>`
+              )
+              .join("")}</select></td></tr>`
+        ).join("")}</table></div></div>`;
+      }
+      function addP() {
+        const n = $("#pn").value.trim(),
+          p = +$("#pp").value,
+          f = $("#pf").files[0],
+          e = $("#pe");
+        if (!n || !p || !f) {
+          e.textContent = "Enter a name, a price and choose a photo.";
+          return;
+        }
+        const r = new FileReader();
+        r.onload = () => {
+          const im = new Image();
+          im.onload = () => {
+            const w = Math.min(540, im.width),
+              c = document.createElement("canvas");
+            c.width = w;
+            c.height = (im.height * w) / im.width;
+            c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+            const id = Math.max(...P.map((x) => x.id)) + 1;
+            IMG["u" + id] = c.toDataURL("image/jpeg", 0.75);
+            P.push({
+              id,
+              n,
+              p,
+              o: $("#po2").value,
+              i: "u" + id,
+              d: $("#pd2").value.trim() || "New arrival from Vvarmika.",
+              ar: 0,
+            });
+            toast("Product added to the shop");
+            render(1);
+          };
+          im.src = r.result;
+        };
+        r.readAsDataURL(f);
+      }
+      function dataFile(u, n) {
+        const b = atob(u.split(",")[1]),
+          a = new Uint8Array(b.length);
+        for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i);
+        return new File([a], n, { type: "image/jpeg" });
+      }
+      async function shareImg() {
+        const o = orders.find((o) => o.id == last.id);
+        try {
+          const fs = o.u
+            .slice(0, 4)
+            .map((l, i) =>
+              dataFile(IMG[find(l.id).i], "vvarmika-" + (i + 1) + ".jpg")
+            );
+          if (navigator.canShare && navigator.canShare({ files: fs })) {
+            await navigator.share({ files: fs, text: last.m });
+          } else toast("Photo sharing works from a phone's share sheet");
+        } catch (e) {
+          toast("Sharing was cancelled or is not available here");
+        }
+      }
       function mode(n) {
         $("#pay").style.display = n == 2 ? "" : "none";
         $("#po").style.display = n == 2 ? "" : "none";
@@ -926,10 +1144,15 @@
           id,
           c,
           t,
+          ph,
+          a,
+          ct,
+          z,
+          at: new Date(),
           pay: ch,
           st: "New",
           live: 1,
-          u: cart.map((l) => ({ id: l.id, q: l.q })),
+          u: cart.map((l) => ({ id: l.id, q: l.q, s: l.s })),
         });
         cart = [];
         location.hash = "sent";
@@ -961,7 +1184,7 @@
           last.id
         } is ready to send</h1><p>Tap a button to send this message to the shop. The shop sees every detail and replies to confirm payment and delivery.</p><div class="box" style="white-space:pre-wrap;margin:16px 0">${esc(
           last.m
-        )}</div><a class="btn" id="wa" target="_blank" rel="noopener" href="${wal()}">Send on WhatsApp</a> <a class="btn alt" id="em" target="_blank" rel="noopener" href="${mal()}">Send by email</a></div><div class="box" style="align-self:start"><h3 style="margin-bottom:8px">Shop contact</h3><p style="color:var(--mute);font-size:14px">Orders go to the shop's WhatsApp and email below. You can change them to test with another number.</p><label>Shop WhatsApp (with country code)<input id="sw" inputmode="tel" value="${SW}" oninput="upd()"></label><label>Shop email<input id="se" value="${SE}" oninput="upd()"></label></div></div>`;
+        )}</div><a class="btn" id="wa" target="_blank" rel="noopener" href="${wal()}">Send on WhatsApp</a> <a class="btn alt" id="em" target="_blank" rel="noopener" href="${mal()}">Send by email</a><p style="color:var(--mute);font-size:14px;margin-top:18px">On a phone you can also send the product photos with the order. This opens your share sheet, where you choose WhatsApp or email.</p><button class="btn alt" onclick="shareImg()">Share with product photos</button></div><div class="box" style="align-self:start"><h3 style="margin-bottom:8px">Shop contact</h3><p style="color:var(--mute);font-size:14px">Orders go to the shop's WhatsApp and email below. You can change them to test with another number.</p><label>Shop WhatsApp (with country code)<input id="sw" inputmode="tel" value="${SW}" oninput="upd()"></label><label>Shop email<input id="se" value="${SE}" oninput="upd()"></label></div></div>`;
       }
       function pick(k, m) {
         cur = k;
@@ -985,7 +1208,7 @@
       function auto() {
         clearInterval(tm);
         if (matchMedia("(prefers-reduced-motion:reduce)").matches) return;
-        tm = setInterval(() => pick((cur + 1) % P.length), 4500);
+        tm = setInterval(() => pick((cur + 1) % Math.min(P.length, 6)), 4500);
       }
       function zoom(e, o) {
         const b = e.currentTarget,
@@ -1010,12 +1233,12 @@
         setTimeout(() => t.remove(), 1800);
       }
       function card(x) {
-        const a = avg(x.id);
+        const a = x.ar || Math.round(avg(x.id));
         return `<div class="card" onclick="location.hash='product-${
           x.id
-        }'"><div class="arch"><img src="${IMG[x.i]}" alt="${
-          x.n
-        }"><button class="heart ${
+        }'"><div class="arch"><img src="${IMG[x.i]}" alt="${x.n}">${
+          x.ar >= 4 ? '<span class="tag">Top pick</span>' : ""
+        }<button class="heart ${
           fav.has(x.id) ? "on" : ""
         }" aria-label="Save to wishlist" onclick="event.stopPropagation();fav.has(${
           x.id
@@ -1049,19 +1272,21 @@
       function home() {
         return `<div class="herob"><div class="wrap"><section class="hero"><div><h1>Woven with grace</h1><p>Premium ethnic wear, crafted with elegance and made for every celebration.</p><a class="btn" href="#shop">Shop the collection</a><div class="now" id="now"></div></div><div class="show"><div class="big arch"><img id="bigI" src="${
           IMG.p1
-        }" alt=""></div><div class="thumbs">${P.map(
-          (x, k) =>
-            `<button class="th" aria-label="${
-              x.n
-            }" onclick="pick(${k},1)"><img src="${IMG[x.i]}" alt=""></button>`
-        ).join(
-          ""
-        )}</div></div></section></div><div class="mq"><div>${"Premium Ethnic Wear ✦ Crafted with Elegance ✦ Made for Every Celebration ✦ ".repeat(
+        }" alt=""></div><div class="thumbs">${P.slice(0, 6)
+          .map(
+            (x, k) =>
+              `<button class="th" aria-label="${
+                x.n
+              }" onclick="pick(${k},1)"><img src="${IMG[x.i]}" alt=""></button>`
+          )
+          .join(
+            ""
+          )}</div></div></section></div><div class="mq"><div>${"Premium Ethnic Wear ✦ Crafted with Elegance ✦ Made for Every Celebration ✦ ".repeat(
           6
         )}</div></div></div><div class="wrap"><section class="trio"><div><h3>Premium ethnic wear</h3><p>Kurta sets with a matching dupatta, finished with care.</p></div><div><h3>Crafted with elegance</h3><p>Detail you notice up close: borders, yokes and thread work.</p></div><div><h3>Made for every celebration</h3><p>From festival evenings to wedding-season looks.</p></div></section>
-<div class="sec"><h2>New arrivals</h2><a href="#shop">View all</a></div><div class="grid">${P.map(
-          card
-        ).join("")}</div>
+<div class="sec"><h2>New arrivals</h2><a href="#shop">View all</a></div><div class="grid">${sp()
+          .map(card)
+          .join("")}</div>
 <div class="sec"><h2>What customers say</h2></div><div style="margin-bottom:64px">${[
           1, 3, 5,
         ]
@@ -1080,9 +1305,8 @@
             `<button class="chip ${
               l == filt ? "on" : ""
             }" onclick="filt='${l}';render()">${l}</button>`
-        ).join("")}</div><div class="grid">${P.filter(
-          (x) => filt == "All" || x.o == filt
-        )
+        ).join("")}</div><div class="grid">${sp()
+          .filter((x) => filt == "All" || x.o == filt)
           .map(card)
           .join("")}</div></div>`;
       }
@@ -1262,10 +1486,15 @@
           id: last.id,
           c,
           t,
+          ph,
+          a,
+          ct: g("#cc"),
+          z: g("#cz"),
+          at: new Date(),
           pay: g("#cm") || $("#cm").value,
           st: "New",
           live: 1,
-          u: cart.map((l) => ({ id: l.id, q: l.q })),
+          u: cart.map((l) => ({ id: l.id, q: l.q, s: l.s })),
         });
         cart = [];
         location.hash = "confirmed";
@@ -1285,7 +1514,9 @@
               checkout,
               confirmed: done,
               sent: sentV,
-              admin,
+              admin: adminDash,
+              "admin-orders": adminOrd,
+              "admin-products": adminProd,
             }[h] || home
           )();
         $("#app").innerHTML = head(h) + v;
