@@ -658,9 +658,18 @@
         .pt {
           min-width: 0;
         }
+        .pt td:nth-child(3),
+        .pt th:nth-child(3),
         .pt td:nth-child(4),
-        .pt th:nth-child(4) {
+        .pt th:nth-child(4),
+        .pt td:nth-child(5),
+        .pt th:nth-child(5) {
           display: none;
+        }
+        .pt td:last-child .chip {
+          display: block;
+          margin: 3px 0;
+          padding: 6px 10px;
         }
         .pt input {
           width: 70px !important;
@@ -687,6 +696,50 @@
         .row {
           grid-template-columns: 1fr;
         }
+      }
+      .tags {
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        align-items: center;
+        z-index: 1;
+      }
+      .tags .tag {
+        position: static;
+        transform: none;
+        white-space: nowrap;
+      }
+      .tag.lm {
+        background: #7a1230;
+        color: #fff;
+      }
+      .tag.bsl {
+        background: #d81b60;
+        color: #fff;
+      }
+      .tag.so {
+        background: #444;
+        color: #fff;
+      }
+      .card.sold img {
+        opacity: 0.5;
+      }
+      .lowt {
+        color: var(--pink);
+        font-weight: 500;
+        margin: 10px 0;
+      }
+      .chip.dg {
+        color: #b3402e;
+        border-color: #b3402e;
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
       }
       .err {
         color: #b3402e;
@@ -959,7 +1012,9 @@
               ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])
           );
       const stars = (n) => "★".repeat(n) + "☆".repeat(5 - n),
-        find = (id) => P.find((x) => x.id == id);
+        find = (id) =>
+          P.find((x) => x.id == id) ||
+          GONE[id] || { id, n: "Removed product", p: 0, i: "p1", q: 0, o: "" };
       const avg = (id) => {
         const r = R[id] || [];
         return r.length ? r.reduce((a, b) => a + b.s, 0) / r.length : 0;
@@ -1007,7 +1062,7 @@
           tp = P.map((x, k) => ({
             x,
             u:
-              Math.round(((U[k] || 0) * n) / 30) +
+              Math.round(((x.sd || 0) * n) / 30) +
               lv.reduce(
                 (a, o) =>
                   a +
@@ -1015,12 +1070,16 @@
                 0
               ),
           })).sort((a, b) => b.u - a.u),
-          nw = orders.filter((o) => o.st == "New").length;
+          nw = orders.filter((o) => o.st == "New").length,
+          lw = P.filter((x) => x.q <= 5).sort((a, b) => a.q - b.q),
+          un = P.reduce((a, x) => a + x.q, 0);
         return `<div class="kpis"><div class="kpi">Revenue<b>${inr(
           rev
         )}</b><span class="up">▲ ${dl}% vs previous ${n} days</span></div><div class="kpi">Orders<b>${ord}</b><span class="up">${nw} new to pack</span></div><div class="kpi">Average order<b>${inr(
           Math.round(rev / ord)
-        )}</b><span>per order</span></div><div class="kpi">Customer rating<b>${ra.toFixed(
+        )}</b><span>per order</span></div><div class="kpi">In stock<b>${un}</b><span>${
+          lw.length
+        } running low</span></div><div class="kpi">Customer rating<b>${ra.toFixed(
           1
         )} ★</b><span>from ${
           rv.length
@@ -1039,13 +1098,164 @@
           )
           .join(
             ""
-          )}</div></div><div class="dgrid" style="grid-template-columns:1fr 1fr"><div class="box"><h3 style="margin-bottom:10px">How customers pay</h3><div class="mix"><i style="width:58%;background:#D81B60"></i><i style="width:27%;background:#F2B33D"></i><i style="width:15%;background:#7A1230"></i></div><p style="margin:8px 0 0;color:var(--mute)">UPI 58%, card 27%, cash on delivery 15%</p></div><div class="box"><h3 style="margin-bottom:6px">Needs attention</h3><p style="margin:4px 0">${nw} new orders waiting to be packed</p><p style="margin:4px 0">Rani Pink Anarkali Set: only 4 left</p><p style="margin:4px 0">Lavender Garden Kurta Set: size M sold out</p></div></div>`;
+          )}</div></div><div class="dgrid" style="grid-template-columns:1fr 1fr"><div class="box"><h3 style="margin-bottom:10px">How customers pay</h3><div class="mix"><i style="width:58%;background:#D81B60"></i><i style="width:27%;background:#F2B33D"></i><i style="width:15%;background:#7A1230"></i></div><p style="margin:8px 0 0;color:var(--mute)">UPI 58%, card 27%, cash on delivery 15%</p></div><div class="box"><h3 style="margin-bottom:6px">Needs attention</h3><p style="margin:4px 0">${nw} new orders waiting to be packed</p>${
+          lw.length
+            ? lw
+                .map(
+                  (x) =>
+                    `<p style="margin:4px 0">${esc(x.n)}: ${
+                      x.q ? "only " + x.q + " left" : "sold out"
+                    }</p>`
+                )
+                .join("")
+            : '<p style="margin:4px 0">All products are well stocked</p>'
+        }</div></div>`;
       }
       const SW = "917231955848",
         SE = "vvarmika@gmail.com",
         LINK = "https://claude.ai/artifact/MuABYRnbhnD6sv6aBB9tQh";
       P[4].ar = 5;
       P[0].ar = 4;
+      P.forEach((x, i) => {
+        x.sd = [28, 31, 38, 27, 45, 41][i];
+        x.q = [12, 3, 8, 2, 15, 6][i];
+      });
+      let editId = null,
+        delAsk = null;
+      const GONE = {};
+      const lu = (id) =>
+          orders
+            .filter((o) => o.live)
+            .reduce(
+              (a, o) =>
+                a + o.u.filter((l) => l.id == id).reduce((b, l) => b + l.q, 0),
+              0
+            ),
+        sold = (x) => (x.sd || 0) + lu(x.id),
+        bs = () =>
+          [...P]
+            .sort((a, b) => sold(b) - sold(a))
+            .slice(0, 2)
+            .filter((x) => sold(x) > 0)
+            .map((x) => x.id);
+      const tags = (x) => {
+        const t = [];
+        if (x.q < 1) t.push('<span class="tag so">Sold out</span>');
+        else if (x.q <= 5)
+          t.push(`<span class="tag lm">Only ${x.q} left</span>`);
+        if (bs().includes(x.id))
+          t.push('<span class="tag bsl">Best seller</span>');
+        if (x.ar >= 4) t.push('<span class="tag">Top pick</span>');
+        return t.length ? `<div class="tags">${t.join("")}</div>` : "";
+      };
+      const stk = (x) =>
+        x.q < 1
+          ? '<p class="lowt">Sold out</p>'
+          : x.q <= 5
+          ? `<p class="lowt">Only ${x.q} left. Order soon.</p>`
+          : `<p style="color:var(--mute)">${x.q} pieces available</p>`;
+      function editP(id) {
+        editId = id;
+        render();
+      }
+      function editBox() {
+        const x = P.find((p) => p.id == editId);
+        if (!x) return "";
+        return `<div class="box" style="margin-bottom:22px;border-color:var(--pink)"><h3 style="margin-bottom:10px">Edit: ${esc(
+          x.n
+        )}</h3><div class="row"><label>Name<input id="en" value="${esc(
+          x.n
+        )}"></label><label>Price in ₹<input id="ep" type="number" value="${
+          x.p
+        }"></label></div><div class="row"><label>Occasion<select id="eo">${[
+          "Festive",
+          "Wedding",
+          "Everyday",
+        ]
+          .map((o) => `<option ${o == x.o ? "selected" : ""}>${o}</option>`)
+          .join(
+            ""
+          )}</select></label><label>Quantity in stock<input id="eq" type="number" value="${
+          x.q
+        }"></label></div><div class="oi" style="margin:6px 0 10px"><img src="${
+          IMG[x.i]
+        }" alt=""><span>Current photo. Choose a new one below to replace it.</span></div><label>New photo (optional)<input id="ef" type="file" accept="image/*"></label><label>Description<textarea id="ed" rows="2">${esc(
+          x.d
+        )}</textarea></label><div class="err" id="ee"></div><button class="btn" onclick="saveP()">Save changes</button> <button class="btn alt" onclick="editId=null;render(1)">Cancel</button></div>`;
+      }
+      function saveP() {
+        const x = P.find((p) => p.id == editId),
+          n = $("#en").value.trim(),
+          p = +$("#ep").value,
+          q = Math.max(0, Math.floor(+$("#eq").value || 0)),
+          f = $("#ef").files[0],
+          e = $("#ee"),
+          o = $("#eo").value,
+          d = $("#ed").value.trim();
+        if (!n || !p) {
+          e.textContent = "Enter a name and a price.";
+          return;
+        }
+        const done = () => {
+          x.n = n;
+          x.p = p;
+          x.q = q;
+          x.o = o;
+          x.d = d || x.d;
+          editId = null;
+          render(1);
+          toast("Product updated");
+        };
+        if (!f) {
+          done();
+          return;
+        }
+        const r = new FileReader(),
+          bad = () => {
+            e.textContent =
+              "This photo could not be read. Please choose a JPG or PNG photo.";
+          };
+        r.onerror = bad;
+        r.onload = () => {
+          const im = new Image();
+          im.onerror = bad;
+          im.onload = () => {
+            const w = Math.min(540, im.naturalWidth),
+              c = document.createElement("canvas");
+            c.width = w;
+            c.height = Math.round((im.naturalHeight * w) / im.naturalWidth);
+            c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+            IMG[x.i] = c.toDataURL("image/jpeg", 0.75);
+            done();
+          };
+          im.src = r.result;
+        };
+        r.readAsDataURL(f);
+      }
+      function delP(id) {
+        if (delAsk != id) {
+          delAsk = id;
+          render(1);
+          return;
+        }
+        if (P.length <= 2) {
+          toast("Keep at least two products");
+          delAsk = null;
+          render(1);
+          return;
+        }
+        GONE[id] = find(id);
+        P.splice(
+          P.findIndex((p) => p.id == id),
+          1
+        );
+        cart = cart.filter((l) => l.id != id);
+        fav.delete(id);
+        delAsk = null;
+        if (editId == id) editId = null;
+        render(1);
+        toast("Product deleted");
+      }
       let ofil = "All";
       const sp = () => [...P].sort((a, b) => (b.ar >= 4) - (a.ar >= 4));
       const at = (k) =>
@@ -1114,17 +1324,23 @@
       function adminProd() {
         return `<div class="wrap" style="padding:5vh 0 56px"><h2>Products</h2>${at(
           "p"
-        )}<div class="box" style="margin-bottom:22px"><h3 style="margin-bottom:10px">Add a new product</h3><div class="row"><label>Name<input id="pn"></label><label>Price in ₹<input id="pp" type="number" inputmode="numeric"></label></div><div class="row"><label>Occasion<select id="po2"><option>Festive</option><option>Wedding</option><option>Everyday</option></select></label><label>Photo<input id="pf" type="file" accept="image/*"></label></div><label>Description<textarea id="pd2" rows="2"></textarea></label><div class="err" id="pe"></div><button class="btn" id="pb" onclick="addP2()">Add to shop</button></div><p style="color:var(--mute)">Rate a product 4 or 5 stars to highlight it as a Top pick. Highlighted products are shown first to every customer.</p><div class="tbl"><table class="pt"><tr><th>Photo</th><th>Product</th><th>Price</th><th>Occasion</th><th>Admin rating</th></tr>${P.map(
+        )}${editBox()}<div class="box" style="margin-bottom:22px"><h3 style="margin-bottom:10px">Add a new product</h3><div class="row"><label>Name<input id="pn"></label><label>Price in ₹<input id="pp" type="number" inputmode="numeric"></label></div><div class="row"><label>Occasion<select id="po2"><option>Festive</option><option>Wedding</option><option>Everyday</option></select></label><label>Quantity in stock<input id="pq" type="number" inputmode="numeric" value="10"></label></div><label>Photo<input id="pf" type="file" accept="image/*"></label><label>Description<textarea id="pd2" rows="2"></textarea></label><div class="err" id="pe"></div><button class="btn" id="pb" onclick="addP2()">Add to shop</button></div><p style="color:var(--mute)">Rate a product 4 or 5 stars to highlight it as a Top pick. Highlighted products are shown first to every customer.</p><div class="tbl"><table class="pt"><tr><th>Photo</th><th>Product</th><th>Price</th><th>Stock</th><th>Occasion</th><th>Admin rating</th><th></th></tr>${P.map(
           (x) =>
             `<tr><td><div class="oi"><img src="${
               IMG[x.i]
             }" alt=""></div></td><td>${esc(x.n)}${
               x.ar >= 4 ? ' <span class="st">Top pick</span>' : ""
-            }</td><td><input type="number" value="${
+            }<br><small>${x.q} in stock, ${inr(
+              x.p
+            )}</small></td><td><input type="number" value="${
               x.p
             }" style="width:100px;margin:0" onchange="find(${
               x.id
-            }).p=+this.value"></td><td>${
+            }).p=+this.value"></td><td><input type="number" value="${
+              x.q
+            }" style="width:80px;margin:0" onchange="find(${
+              x.id
+            }).q=Math.max(0,Math.floor(+this.value||0))"></td><td>${
               x.o
             }</td><td><select style="margin:0;width:auto" onchange="find(${
               x.id
@@ -1135,7 +1351,13 @@
                     r ? "★".repeat(r) : "Not rated"
                   }</option>`
               )
-              .join("")}</select></td></tr>`
+              .join("")}</select></td><td><button class="chip" onclick="editP(${
+              x.id
+            })">Edit</button> <button class="chip ${
+              delAsk == x.id ? "dg" : ""
+            }" onclick="delP(${x.id})">${
+              delAsk == x.id ? "Confirm delete" : "Delete"
+            }</button></td></tr>`
         ).join("")}</table></div></div>`;
       }
       function addP() {
@@ -1246,6 +1468,10 @@
           live: 1,
           u: cart.map((l) => ({ id: l.id, q: l.q, s: l.s })),
         });
+        cart.forEach((l) => {
+          const x = find(l.id);
+          x.q = Math.max(0, x.q - l.q);
+        });
         cart = [];
         location.hash = "sent";
       }
@@ -1335,6 +1561,8 @@
               i: "u" + id,
               d: d || "New arrival from Vvarmika.",
               ar: 0,
+              q: Math.max(0, Math.floor(+$("#pq").value || 0)),
+              sd: 0,
             });
             render(1);
             toast("Product added. It is now live in the shop.");
@@ -1346,6 +1574,7 @@
         r.readAsDataURL(f);
       }
       function pick(k, m) {
+        if (!P[k]) k = 0;
         cur = k;
         const x = P[k],
           i = $("#bigI");
@@ -1393,11 +1622,13 @@
       }
       function card(x) {
         const a = x.ar || Math.round(avg(x.id));
-        return `<div class="card" onclick="location.hash='product-${
+        return `<div class="card ${
+          x.q < 1 ? "sold" : ""
+        }" onclick="location.hash='product-${
           x.id
-        }'"><div class="arch"><img src="${IMG[x.i]}" alt="${x.n}">${
-          x.ar >= 4 ? '<span class="tag">Top pick</span>' : ""
-        }<button class="heart ${
+        }'"><div class="arch"><img src="${IMG[x.i]}" alt="${x.n}">${tags(
+          x
+        )}<button class="heart ${
           fav.has(x.id) ? "on" : ""
         }" aria-label="Save to wishlist" onclick="event.stopPropagation();fav.has(${
           x.id
@@ -1490,9 +1721,11 @@
                 s == size ? "on" : ""
               }" onclick="size='${s}';render()">${s}</button>`
           )
-          .join("")}</div><button class="btn" onclick="add(${
-          x.id
-        })">Add to cart</button><div class="lbl" style="margin-top:34px">Reviews ${
+          .join("")}</div>${stk(x)}<button class="btn" ${
+          x.q < 1 ? "disabled" : ""
+        } onclick="add(${x.id})">${
+          x.q < 1 ? "Sold out" : "Add to cart"
+        }</button><div class="lbl" style="margin-top:34px">Reviews ${
           a
             ? `<span class="st">${stars(Math.round(a))}</span> ${a.toFixed(
                 1
@@ -1606,14 +1839,31 @@
         ).join("")}</table></div></div>`;
       }
       function add(id) {
+        const x = find(id),
+          have = cart.filter((l) => l.id == id).reduce((a, l) => a + l.q, 0);
+        if (x.q < 1) {
+          toast("Sold out");
+          return;
+        }
+        if (have >= x.q) {
+          toast("Only " + x.q + " available");
+          return;
+        }
         const l = cart.find((l) => l.id == id && l.s == size);
         l ? l.q++ : cart.push({ id, s: size, q: 1 });
         toast("Added to cart");
         render(1);
       }
       function qty(k, d) {
-        cart[k].q += d;
-        if (cart[k].q < 1) cart.splice(k, 1);
+        const l = cart[k],
+          x = find(l.id),
+          have = cart.filter((c) => c.id == l.id).reduce((a, c) => a + c.q, 0);
+        if (d > 0 && have >= x.q) {
+          toast("Only " + x.q + " available");
+          return;
+        }
+        l.q += d;
+        if (l.q < 1) cart.splice(k, 1);
         render(1);
       }
       function review(id) {
@@ -1655,6 +1905,10 @@
           live: 1,
           u: cart.map((l) => ({ id: l.id, q: l.q, s: l.s })),
         });
+        cart.forEach((l) => {
+          const x = find(l.id);
+          x.q = Math.max(0, x.q - l.q);
+        });
         cart = [];
         location.hash = "confirmed";
       }
@@ -1662,7 +1916,7 @@
         const h = location.hash.slice(1) || "home",
           y = scrollY;
         let v;
-        if (h.startsWith("product-") && find(h.slice(8)))
+        if (h.startsWith("product-") && P.find((x) => x.id == h.slice(8)))
           v = product(h.slice(8));
         else
           v = (
