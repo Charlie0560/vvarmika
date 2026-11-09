@@ -649,6 +649,45 @@
       td small {
         color: var(--mute);
       }
+      .toast {
+        width: max-content;
+        max-width: 88vw;
+        text-align: center;
+      }
+      @media (max-width: 760px) {
+        .pt {
+          min-width: 0;
+        }
+        .pt td:nth-child(4),
+        .pt th:nth-child(4) {
+          display: none;
+        }
+        .pt input {
+          width: 70px !important;
+        }
+        .pt select {
+          width: 92px !important;
+          padding: 10px 3px;
+          font-size: 14px;
+        }
+        .pt td,
+        .pt th {
+          padding: 10px 2px;
+        }
+        .pt .oi img {
+          width: 30px;
+          height: 40px;
+        }
+      }
+      .wrap {
+        padding-left: 5vw !important;
+        padding-right: 5vw !important;
+      }
+      @media (max-width: 480px) {
+        .row {
+          grid-template-columns: 1fr;
+        }
+      }
       .err {
         color: #b3402e;
         min-height: 24px;
@@ -1075,7 +1114,7 @@
       function adminProd() {
         return `<div class="wrap" style="padding:5vh 0 56px"><h2>Products</h2>${at(
           "p"
-        )}<div class="box" style="margin-bottom:22px"><h3 style="margin-bottom:10px">Add a new product</h3><div class="row"><label>Name<input id="pn"></label><label>Price in ₹<input id="pp" type="number" inputmode="numeric"></label></div><div class="row"><label>Occasion<select id="po2"><option>Festive</option><option>Wedding</option><option>Everyday</option></select></label><label>Photo<input id="pf" type="file" accept="image/*"></label></div><label>Description<textarea id="pd2" rows="2"></textarea></label><div class="err" id="pe"></div><button class="btn" onclick="addP()">Add to shop</button></div><p style="color:var(--mute)">Rate a product 4 or 5 stars to highlight it as a Top pick. Highlighted products are shown first to every customer.</p><div class="tbl"><table><tr><th>Photo</th><th>Product</th><th>Price</th><th>Occasion</th><th>Admin rating</th></tr>${P.map(
+        )}<div class="box" style="margin-bottom:22px"><h3 style="margin-bottom:10px">Add a new product</h3><div class="row"><label>Name<input id="pn"></label><label>Price in ₹<input id="pp" type="number" inputmode="numeric"></label></div><div class="row"><label>Occasion<select id="po2"><option>Festive</option><option>Wedding</option><option>Everyday</option></select></label><label>Photo<input id="pf" type="file" accept="image/*"></label></div><label>Description<textarea id="pd2" rows="2"></textarea></label><div class="err" id="pe"></div><button class="btn" id="pb" onclick="addP2()">Add to shop</button></div><p style="color:var(--mute)">Rate a product 4 or 5 stars to highlight it as a Top pick. Highlighted products are shown first to every customer.</p><div class="tbl"><table class="pt"><tr><th>Photo</th><th>Product</th><th>Price</th><th>Occasion</th><th>Admin rating</th></tr>${P.map(
           (x) =>
             `<tr><td><div class="oi"><img src="${
               IMG[x.i]
@@ -1253,6 +1292,58 @@
             ? `<div class="grid">${L.map(card).join("")}</div>`
             : `<div style="padding:6vh 0 10vh"><p style="color:var(--mute)">You have not saved anything yet. Tap the heart on a product to save it here.</p><a class="btn" href="#shop">Browse the shop</a></div>`
         }</div>`;
+      }
+      function addP2() {
+        const n = $("#pn").value.trim(),
+          p = +$("#pp").value,
+          f = $("#pf").files[0],
+          e = $("#pe"),
+          bt = $("#pb"),
+          o = $("#po2").value,
+          d = $("#pd2").value.trim(),
+          bad = () => {
+            bt.disabled = false;
+            bt.textContent = "Add to shop";
+            e.textContent =
+              "This photo could not be read. Please choose a JPG or PNG photo.";
+          };
+        e.textContent = "";
+        if (!n || !p || !f) {
+          e.textContent = "Enter a name, a price and choose a photo.";
+          return;
+        }
+        bt.disabled = true;
+        bt.textContent = "Adding…";
+        const r = new FileReader();
+        r.onerror = bad;
+        r.onload = () => {
+          const im = new Image();
+          im.onerror = bad;
+          im.onload = () => {
+            const w = Math.min(540, im.naturalWidth),
+              c = document.createElement("canvas");
+            c.width = w;
+            c.height = Math.round((im.naturalHeight * w) / im.naturalWidth);
+            c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+            const id = Math.max(...P.map((x) => x.id)) + 1;
+            IMG["u" + id] = c.toDataURL("image/jpeg", 0.75);
+            P.push({
+              id,
+              n,
+              p,
+              o,
+              i: "u" + id,
+              d: d || "New arrival from Vvarmika.",
+              ar: 0,
+            });
+            render(1);
+            toast("Product added. It is now live in the shop.");
+            const t = document.querySelectorAll(".tbl tr");
+            t[t.length - 1].scrollIntoView({ block: "center" });
+          };
+          im.src = r.result;
+        };
+        r.readAsDataURL(f);
       }
       function pick(k, m) {
         cur = k;
