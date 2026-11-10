@@ -881,6 +881,125 @@
           height: 38px;
         }
       }
+      .gal {
+        position: relative;
+        min-width: 0;
+      }
+      .gtrack {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-behavior: smooth;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+      }
+      .gtrack::-webkit-scrollbar {
+        display: none;
+      }
+      .gs {
+        flex: 0 0 100%;
+        scroll-snap-align: center;
+        aspect-ratio: 3/4;
+        border-radius: 999px 999px 8px 8px;
+        overflow: hidden;
+        background: var(--line);
+      }
+      .gs img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 50% 35%;
+        display: block;
+      }
+      .gn {
+        position: absolute;
+        top: 42%;
+        transform: translateY(-50%);
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: 0;
+        background: rgba(255, 255, 255, 0.9);
+        color: #222;
+        font-size: 22px;
+        line-height: 1;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+        z-index: 2;
+      }
+      .gn.l {
+        left: 8px;
+      }
+      .gn.r {
+        right: 8px;
+      }
+      .gth {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+      .gth button {
+        width: 52px;
+        aspect-ratio: 3/4.2;
+        border-radius: 26px 26px 3px 3px;
+        overflow: hidden;
+        border: 2px solid transparent;
+        padding: 0;
+        cursor: pointer;
+        opacity: 0.55;
+        background: none;
+      }
+      .gth button.on {
+        opacity: 1;
+        border-color: var(--pink);
+      }
+      .gth img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .gct {
+        text-align: center;
+        font-size: 13px;
+        color: var(--mute);
+        margin-top: 6px;
+      }
+      .abar {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 14px 0 0;
+      }
+      .abar span {
+        color: var(--mute);
+        font-size: 14px;
+      }
+      .ept {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin: 6px 0 12px;
+      }
+      .ept > div {
+        text-align: center;
+        font-size: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        align-items: center;
+      }
+      .ept img {
+        width: 56px;
+        height: 74px;
+        object-fit: cover;
+        border-radius: 28px 28px 4px 4px;
+        display: block;
+      }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   </head>
@@ -1222,18 +1341,124 @@
             ""
           )}</select></label><label>Quantity in stock<input id="eq" type="number" value="${
           x.q
-        }"></label></div><div class="oi" style="margin:6px 0 10px"><img src="${
-          IMG[x.i]
-        }" alt=""><span>Current photo. Choose a new one below to replace it.</span></div><label>New photo (optional)<input id="ef" type="file" accept="image/*"></label><label>Description<textarea id="ed" rows="2">${esc(
+        }"></label></div><div class="lbl">Photos (${
+          gal(x).length
+        })</div><div class="ept">${gal(x)
+          .map(
+            (k, j) =>
+              `<div><img src="${IMG[k]}" alt="">${
+                j
+                  ? `<button class="chip" onclick="mainImg('${k}')">Make main</button>`
+                  : "<span>Main photo</span>"
+              }${
+                gal(x).length > 1
+                  ? `<button class="chip dg" onclick="rmImg('${k}')">Remove</button>`
+                  : ""
+              }</div>`
+          )
+          .join(
+            ""
+          )}</div><label>Add more photos (optional, you can choose several)<input id="ef" type="file" accept="image/*" multiple></label><label>Description<textarea id="ed" rows="2">${esc(
           x.d
         )}</textarea></label><div class="err" id="ee"></div><button class="btn" onclick="saveP()">Save changes</button> <button class="btn alt" onclick="editId=null;render(1)">Cancel</button></div>`;
+      }
+      let adm = 0,
+        gi = 0,
+        gp = 0,
+        gseq = 0;
+      const gal = (x) => [x.i, ...(x.g || [])],
+        gkey = () => "g" + Date.now() + "_" + gseq++;
+      function readImg(f) {
+        return new Promise((ok, no) => {
+          const r = new FileReader();
+          r.onerror = no;
+          r.onload = () => {
+            const im = new Image();
+            im.onerror = no;
+            im.onload = () => {
+              const w = Math.min(540, im.naturalWidth),
+                c = document.createElement("canvas");
+              c.width = w;
+              c.height = Math.round((im.naturalHeight * w) / im.naturalWidth);
+              c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+              ok(c.toDataURL("image/jpeg", 0.75));
+            };
+            im.src = r.result;
+          };
+          r.readAsDataURL(f);
+        });
+      }
+      const readImgs = (fs) => Promise.all([...fs].map(readImg));
+      function rmImg(k) {
+        const x = P.find((p) => p.id == editId);
+        if (!x) return;
+        if (k == x.i) x.i = (x.g || []).shift();
+        else x.g = (x.g || []).filter((g) => g != k);
+        render(1);
+      }
+      function mainImg(k) {
+        const x = P.find((p) => p.id == editId);
+        if (!x) return;
+        x.g = (x.g || []).filter((g) => g != k);
+        x.g.unshift(x.i);
+        x.i = k;
+        render(1);
+      }
+      function gGo(d) {
+        const t = $("#gt");
+        if (t)
+          t.scrollBy({ left: d * (t.clientWidth + 10), behavior: "smooth" });
+      }
+      function gAt(j) {
+        const t = $("#gt");
+        if (t)
+          t.scrollTo({ left: j * (t.clientWidth + 10), behavior: "smooth" });
+      }
+      function gSync() {
+        const t = $("#gt");
+        if (!t) return;
+        const k = Math.max(
+          0,
+          Math.min(
+            t.children.length - 1,
+            Math.round(t.scrollLeft / (t.clientWidth + 10))
+          )
+        );
+        gi = k;
+        document
+          .querySelectorAll(".gth button")
+          .forEach((b, j) => b.classList.toggle("on", j == k));
+        const c = $("#gc");
+        if (c) c.textContent = k + 1 + " / " + t.children.length;
+      }
+      function gallery(x) {
+        const L = gal(x);
+        if (L.length < 2)
+          return `<div class="arch zm" style="border-radius:999px 999px 8px 8px" onmousemove="zoom(event)" onmouseleave="zoom(event,1)"><img src="${
+            IMG[x.i]
+          }" alt="${esc(x.n)}"></div>`;
+        return `<div class="gal"><div class="gtrack" id="gt" onscroll="gSync()">${L.map(
+          (k, j) =>
+            `<div class="gs"><img src="${IMG[k]}" alt="${esc(x.n)}, photo ${
+              j + 1
+            }"></div>`
+        ).join(
+          ""
+        )}</div><button class="gn l" aria-label="Previous photo" onclick="gGo(-1)">‹</button><button class="gn r" aria-label="Next photo" onclick="gGo(1)">›</button><div class="gth">${L.map(
+          (k, j) =>
+            `<button class="${j == gi ? "on" : ""}" aria-label="Show photo ${
+              j + 1
+            }" onclick="gAt(${j})"><img src="${IMG[k]}" alt=""></button>`
+        ).join("")}</div><div class="gct" id="gc">${gi + 1} / ${
+          L.length
+        }</div></div>`;
       }
       function saveP() {
         const x = P.find((p) => p.id == editId),
           n = $("#en").value.trim(),
           p = +$("#ep").value,
           q = Math.max(0, Math.floor(+$("#eq").value || 0)),
-          f = $("#ef").files[0],
+          fs = $("#ef").files,
           e = $("#ee"),
           o = $("#eo").value,
           d = $("#ed").value.trim();
@@ -1251,31 +1476,24 @@
           render(1);
           toast("Product updated");
         };
-        if (!f) {
+        if (!fs.length) {
           done();
           return;
         }
-        const r = new FileReader(),
-          bad = () => {
-            e.textContent =
-              "This photo could not be read. Please choose a JPG or PNG photo.";
-          };
-        r.onerror = bad;
-        r.onload = () => {
-          const im = new Image();
-          im.onerror = bad;
-          im.onload = () => {
-            const w = Math.min(540, im.naturalWidth),
-              c = document.createElement("canvas");
-            c.width = w;
-            c.height = Math.round((im.naturalHeight * w) / im.naturalWidth);
-            c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
-            IMG[x.i] = c.toDataURL("image/jpeg", 0.75);
+        readImgs(fs)
+          .then((L) => {
+            x.g = x.g || [];
+            L.forEach((u) => {
+              const k = gkey();
+              IMG[k] = u;
+              x.g.push(k);
+            });
             done();
-          };
-          im.src = r.result;
-        };
-        r.readAsDataURL(f);
+          })
+          .catch(() => {
+            e.textContent =
+              "A photo could not be read. Please choose JPG or PNG photos.";
+          });
       }
       function delP(id) {
         if (delAsk != id) {
@@ -1371,15 +1589,19 @@
       function adminProd() {
         return `<div class="wrap" style="padding:5vh 0 56px"><h2>Products</h2>${at(
           "p"
-        )}${editBox()}<div class="box" style="margin-bottom:22px"><h3 style="margin-bottom:10px">Add a new product</h3><div class="row"><label>Name<input id="pn"></label><label>Price in ₹<input id="pp" type="number" inputmode="numeric"></label></div><div class="row"><label>Occasion<select id="po2"><option>Festive</option><option>Wedding</option><option>Everyday</option></select></label><label>Quantity in stock<input id="pq" type="number" inputmode="numeric" value="10"></label></div><label>Photo<input id="pf" type="file" accept="image/*"></label><label>Description<textarea id="pd2" rows="2"></textarea></label><div class="err" id="pe"></div><button class="btn" id="pb" onclick="addP2()">Add to shop</button></div><p style="color:var(--mute)">Rate a product 4 or 5 stars to highlight it as a Top pick. Highlighted products are shown first to every customer.</p><div class="tbl"><table class="pt"><tr><th>Photo</th><th>Product</th><th>Price</th><th>Stock</th><th>Occasion</th><th>Admin rating</th><th></th></tr>${P.map(
+        )}${editBox()}<div class="box" style="margin-bottom:22px"><h3 style="margin-bottom:10px">Add a new product</h3><div class="row"><label>Name<input id="pn"></label><label>Price in ₹<input id="pp" type="number" inputmode="numeric"></label></div><div class="row"><label>Occasion<select id="po2"><option>Festive</option><option>Wedding</option><option>Everyday</option></select></label><label>Quantity in stock<input id="pq" type="number" inputmode="numeric" value="10"></label></div><label>Photos (choose one or more, the first is the main photo)<input id="pf" type="file" accept="image/*" multiple></label><label>Description<textarea id="pd2" rows="2"></textarea></label><div class="err" id="pe"></div><button class="btn" id="pb" onclick="addP2()">Add to shop</button></div><p style="color:var(--mute)">Rate a product 4 or 5 stars to highlight it as a Top pick. Highlighted products are shown first to every customer.</p><div class="tbl"><table class="pt"><tr><th>Photo</th><th>Product</th><th>Price</th><th>Stock</th><th>Occasion</th><th>Admin rating</th><th></th></tr>${P.map(
           (x) =>
-            `<tr><td><div class="oi"><img src="${
+            `<tr><td><a href="#product-${
+              x.id
+            }" onclick="adm=1" aria-label="Open product page"><div class="oi"><img src="${
               IMG[x.i]
-            }" alt=""></div></td><td>${esc(x.n)}${
+            }" alt=""></div></a></td><td><a href="#product-${
+              x.id
+            }" onclick="adm=1" style="color:inherit">${esc(x.n)}</a>${
               x.ar >= 4 ? ' <span class="st">Top pick</span>' : ""
-            }<br><small>${x.q} in stock, ${inr(
-              x.p
-            )}</small></td><td><input type="number" value="${
+            }<br><small>${x.q} in stock, ${inr(x.p)}, ${gal(x).length} photo${
+              gal(x).length > 1 ? "s" : ""
+            }</small></td><td><input type="number" value="${
               x.p
             }" style="width:100px;margin:0" onchange="find(${
               x.id
@@ -1398,7 +1620,9 @@
                     r ? "★".repeat(r) : "Not rated"
                   }</option>`
               )
-              .join("")}</select></td><td><button class="chip" onclick="editP(${
+              .join("")}</select></td><td><a class="chip" href="#product-${
+              x.id
+            }" onclick="adm=1">View page</a> <button class="chip" onclick="editP(${
               x.id
             })">Edit</button> <button class="chip ${
               delAsk == x.id ? "dg" : ""
@@ -1571,43 +1795,35 @@
       function addP2() {
         const n = $("#pn").value.trim(),
           p = +$("#pp").value,
-          f = $("#pf").files[0],
+          fs = $("#pf").files,
           e = $("#pe"),
           bt = $("#pb"),
           o = $("#po2").value,
-          d = $("#pd2").value.trim(),
-          bad = () => {
-            bt.disabled = false;
-            bt.textContent = "Add to shop";
-            e.textContent =
-              "This photo could not be read. Please choose a JPG or PNG photo.";
-          };
+          d = $("#pd2").value.trim();
         e.textContent = "";
-        if (!n || !p || !f) {
-          e.textContent = "Enter a name, a price and choose a photo.";
+        if (!n || !p || !fs.length) {
+          e.textContent =
+            "Enter a name, a price and choose at least one photo.";
           return;
         }
         bt.disabled = true;
         bt.textContent = "Adding…";
-        const r = new FileReader();
-        r.onerror = bad;
-        r.onload = () => {
-          const im = new Image();
-          im.onerror = bad;
-          im.onload = () => {
-            const w = Math.min(540, im.naturalWidth),
-              c = document.createElement("canvas");
-            c.width = w;
-            c.height = Math.round((im.naturalHeight * w) / im.naturalWidth);
-            c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+        readImgs(fs)
+          .then((L) => {
             const id = Math.max(...P.map((x) => x.id)) + 1;
-            IMG["u" + id] = c.toDataURL("image/jpeg", 0.75);
+            IMG["u" + id] = L[0];
+            const g = L.slice(1).map((u) => {
+              const k = gkey();
+              IMG[k] = u;
+              return k;
+            });
             P.push({
               id,
               n,
               p,
               o,
               i: "u" + id,
+              g,
               d: d || "New arrival from Vvarmika.",
               ar: 0,
               q: Math.max(0, Math.floor(+$("#pq").value || 0)),
@@ -1617,10 +1833,13 @@
             toast("Product added. It is now live in the shop.");
             const t = document.querySelectorAll(".tbl tr");
             t[t.length - 1].scrollIntoView({ block: "center" });
-          };
-          im.src = r.result;
-        };
-        r.readAsDataURL(f);
+          })
+          .catch(() => {
+            bt.disabled = false;
+            bt.textContent = "Add to shop";
+            e.textContent =
+              "A photo could not be read. Please choose JPG or PNG photos.";
+          });
       }
       function bill(o) {
         const it = o.u.map((l) => {
@@ -1943,9 +2162,15 @@
         const x = find(id),
           rv = R[x.id] || [],
           a = avg(x.id);
-        return `<div class="wrap"><div class="pd"><div class="arch zm" style="border-radius:999px 999px 8px 8px" onmousemove="zoom(event)" onmouseleave="zoom(event,1)"><img src="${
-          IMG[x.i]
-        }" alt="${x.n}"></div><div><h1>${x.n}</h1><div class="pr">${inr(
+        if (gp != x.id) {
+          gp = x.id;
+          gi = 0;
+        }
+        return `<div class="wrap">${
+          adm
+            ? `<div class="abar"><a class="chip" href="#admin-products">← Back to products</a><button class="chip" onclick="editP(${x.id});location.hash='admin-products'">Edit this product</button><span>Admin preview: this is the page customers see.</span></div>`
+            : ""
+        }<div class="pd">${gallery(x)}<div><h1>${x.n}</h1><div class="pr">${inr(
           x.p
         )}</div><p>${x.d}</p><div class="lbl">Size</div><div class="chips">${[
           "S",
@@ -2157,6 +2382,7 @@
         const h = location.hash.slice(1) || "home",
           y = scrollY;
         let v;
+        if (!h.startsWith("product-")) adm = 0;
         if (h.startsWith("product-") && P.find((x) => x.id == h.slice(8)))
           v = product(h.slice(8));
         else if (
@@ -2180,6 +2406,14 @@
             }[h] || home
           )();
         $("#app").innerHTML = head(h) + v;
+        {
+          const t = $("#gt");
+          if (t && gi) {
+            t.style.scrollBehavior = "auto";
+            t.scrollLeft = gi * (t.clientWidth + 10);
+            t.style.scrollBehavior = "";
+          }
+        }
         clearInterval(tm);
         if (h == "home") {
           pick(cur);
